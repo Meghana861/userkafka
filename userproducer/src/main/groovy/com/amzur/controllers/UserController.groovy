@@ -56,7 +56,7 @@ class UserController {
         }
     }
 
-    @ExecuteOn(TaskExecutors.IO)
+   @ExecuteOn(TaskExecutors.BLOCKING)
     @Get
     @Status(HttpStatus.CREATED)
     def getAllUsers(){
@@ -71,7 +71,7 @@ class UserController {
         }
     }
 
-    @ExecuteOn(TaskExecutors.IO)
+    @ExecuteOn(TaskExecutors.BLOCKING)
     @Put("/{id}")
     @Status(HttpStatus.CREATED)
     def updateUsersById(@PathVariable Long id, @Body User user){
@@ -91,20 +91,17 @@ class UserController {
         }
     }
 
-    @ExecuteOn(TaskExecutors.IO)
+   @ExecuteOn(TaskExecutors.BLOCKING)
     @Delete("/{id}")
-    @Status(HttpStatus.CREATED)
+    @Status(HttpStatus.NO_CONTENT)
     def deleteUserById(@PathVariable Long id){
         HttpResponse<?> response=httpClient.toBlocking().exchange(HttpRequest.DELETE("/users-process/${id}"))
-        if(response.status()==HttpStatus.NO_CONTENT && response.body){
-            if(messageProducer.sendMessage("Deleted User successfully")){
+        if(response.status()==HttpStatus.NO_CONTENT){
+               def kafka="Deleted Successfully through kafka"
+            if(messageProducer.sendMessage(kafka)) {
                 return HttpResponse.ok("Deleted User")
             }
-            else{
-                return HttpResponse.serverError("Error Deleting User")
             }
-
-        }
         else{
             return  HttpResponse.status(response.status()).body("Failed to Delete User in other microservice")
         }
